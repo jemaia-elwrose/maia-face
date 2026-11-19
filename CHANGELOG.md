@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.3
+- `face-attr`: a missing checkpoint now lists the checkpoints that are there and how to pick one.
+
 ## 0.1.2
 - `associate()` accepts detector rows with extra columns (YOLO's `(N, 6)`) directly.
 - `examples/age_gender.py`: YOLO people + faces + MiVOLO, end to end.

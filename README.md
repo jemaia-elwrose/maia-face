@@ -111,11 +111,15 @@ VOLO internals it builds on), which the `[mivolo]` extra pins. Run it in its own
 the provided image (`docker compose --profile attributes up`). Missing crops are passed as empty
 inputs, as in MiVOLO's own pipeline; face-only checkpoints require a face crop.
 
-With Docker (CPU, default backend):
+With Docker (CPU, default backend; the age/gender worker has its own GPU image):
 
 ```bash
 docker compose up --build
 docker compose run --rm cli enroll "Alice" /data/alice1.jpg      # ./data is mounted at /data
+
+# age/gender: put your MiVOLO checkpoint in ./models and name it once in .env
+echo "MIVOLO_CHECKPOINT=model_imdb_cross_person.pth.tar" >> .env
+docker compose --profile attributes up --build
 ```
 
 ## Wire format
@@ -152,7 +156,7 @@ examples/        smoke test, video identification, age and gender per person
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 28 tests, ~3 s; synthetic faces, no weights needed
+pytest -q          # 29 tests, ~3 s; synthetic faces, no weights needed
 ruff check . && ruff format --check .
 ```
 

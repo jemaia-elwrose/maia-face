@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
 
 import numpy as np
 from maia_infer import Result, Worker
@@ -81,6 +82,22 @@ class FaceWorker(Worker):
         ]
 
 
+def _check_checkpoint(path: str) -> None:
+    """Fail with a useful message (which checkpoints *are* there) instead of a bare FileNotFoundError."""
+    p = Path(path)
+    if p.is_file():
+        return
+    folder = p.parent if p.parent.is_dir() else None
+    found = sorted(f.name for f in folder.iterdir() if f.name.endswith((".pth", ".pth.tar", ".pt"))) if folder else []
+    hint = (
+        f"Checkpoints in {folder}: {', '.join(found)}. With Docker Compose, choose one with "
+        f"MIVOLO_CHECKPOINT={found[0]} (or put that line in a .env file next to docker-compose.yml)."
+        if found
+        else f"No checkpoint files found in {folder or p.parent}."
+    )
+    raise FileNotFoundError(f"MiVOLO checkpoint not found: {path}. {hint}")
+
+
 class AttributesWorker(Worker):
     """Age and gender with MiVOLO. Request: arrays = [face_crop, body_crop] (either may
     be an empty 0x0x3 array when missing). Reply meta: {"age", "gender", "gender_conf"}."""
@@ -95,6 +112,7 @@ class AttributesWorker(Worker):
         checkpoint = self.options.get("checkpoint")
         if not checkpoint:
             raise ValueError("face-attr needs --opt checkpoint=/path/to/mivolo_checkpoint.pth.tar")
+        _check_checkpoint(checkpoint)
         device = select_device(self.options.get("device", "auto"))
         self.estimator = MiVOLOEstimator(
             checkpoint, device=device, half=self.options.get("half") == "true", source=self.options.get("mivolo_src")

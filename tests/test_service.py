@@ -169,3 +169,12 @@ def test_mivolo_face_only_checkpoint_needs_faces():
     assert len(est.estimate([(face, face)])) == 1 and seen["channels"] == 3  # body ignored
     with pytest.raises(ValueError, match="face-only"):
         est.estimate([(None, face)])
+
+
+def test_missing_checkpoint_lists_available_ones(tmp_path):
+    from maia_face.workers import _check_checkpoint
+
+    (tmp_path / "model_imdb_cross_person.pth.tar").write_bytes(b"x")
+    with pytest.raises(FileNotFoundError, match="MIVOLO_CHECKPOINT=model_imdb_cross_person.pth.tar"):
+        _check_checkpoint(str(tmp_path / "mivolo.pth.tar"))
+    _check_checkpoint(str(tmp_path / "model_imdb_cross_person.pth.tar"))  # exists: no error
