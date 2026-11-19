@@ -5,17 +5,28 @@ from __future__ import annotations
 import numpy as np
 
 
+def _boxes(boxes) -> np.ndarray:
+    """Accept (N, 4) boxes or detector rows with extra columns, e.g. YOLO's (N, 6)."""
+    arr = np.asarray(boxes, np.float32)
+    if arr.size == 0:
+        return np.zeros((0, 4), np.float32)
+    return np.atleast_2d(arr)[:, :4]
+
+
 def associate(
     face_boxes: np.ndarray, person_boxes: np.ndarray, min_inside: float = 0.8, max_head_fraction: float = 0.5
 ) -> list[int]:
     """For each face, the index of the person it belongs to, or -1.
 
+    Boxes are ``x1, y1, x2, y2``; extra columns (score, class) are ignored, so
+    detector output such as YOLO's ``(N, 6)`` rows can be passed directly.
+
     A face belongs to a person when most of it lies inside the person box and
     its centre is in the top part of that box (where a head is). Each person
     gets at most one face; ties go to the tightest fit.
     """
-    faces = np.asarray(face_boxes, np.float32).reshape(-1, 4)
-    persons = np.asarray(person_boxes, np.float32).reshape(-1, 4)
+    faces = _boxes(face_boxes)
+    persons = _boxes(person_boxes)
     result = [-1] * len(faces)
     if not len(faces) or not len(persons):
         return result

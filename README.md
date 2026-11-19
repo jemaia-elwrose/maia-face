@@ -145,14 +145,14 @@ src/maia_face/
   client.py      FaceClient for pipelines
   weights.py     download-once weights with integrity checks
   cli.py         maia-face enroll | identify | verify | list | remove | setup-mivolo
-examples/        smoke test, video identification
+examples/        smoke test, video identification, age and gender per person
 ```
 
 ## Development
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 27 tests, ~3 s; synthetic faces, no weights needed
+pytest -q          # 28 tests, ~3 s; synthetic faces, no weights needed
 ruff check . && ruff format --check .
 ```
 

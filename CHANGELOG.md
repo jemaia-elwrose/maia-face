@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+- `associate()` accepts detector rows with extra columns (YOLO's `(N, 6)`) directly.
+- `examples/age_gender.py`: YOLO people + faces + MiVOLO, end to end.
+
 ## 0.1.1
 - MiVOLO: `maia-face setup-mivolo` fetches its source at a pinned commit (its package can't
   be built with current setuptools); `[mivolo]` extra pins timm 0.8.13.dev0, the version its

@@ -154,3 +154,10 @@ def test_quiet_opencv_restores_log_level():
         assert log.getLogLevel() == log.LOG_LEVEL_ERROR
     assert log.getLogLevel() == log.LOG_LEVEL_INFO
     log.setLogLevel(log.LOG_LEVEL_WARNING)
+
+
+def test_associate_accepts_detector_rows_with_extra_columns():
+    persons = np.array([[0, 0, 100, 300, 0.9, 0], [200, 0, 300, 300, 0.8, 0]], np.float32)  # YOLO (N, 6)
+    faces = np.array([[230, 10, 270, 50, 0.99] + [0] * 10], np.float32)  # face rows (N, 15)
+    assert associate(faces, persons) == [1]
+    assert associate(np.zeros((0, 15)), persons) == []

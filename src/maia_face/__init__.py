@@ -19,4 +19,4 @@ __all__ = [
     "pack_faces",
     "unpack_faces",
 ]
-__version__ = "0.1.1"
+__version__ = "0.1.2"

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "maia-face"
-version = "0.1.1"
+version = "0.1.2"
 description = "Face detection, recognition, age/gender and an identity gallery for real-time video analytics, served with maia-infer."
 readme = "README.md"
 license = "MIT"
