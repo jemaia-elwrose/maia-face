@@ -5,6 +5,8 @@ Pure OpenCV DNN: no PyTorch, runs well on CPU, licensed for commercial use.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 import cv2
 import numpy as np
 
@@ -13,13 +15,31 @@ from ..types import Face
 from .base import l2_normalize
 
 
+@contextmanager
+def _quiet_opencv():
+    """OpenCV 5's new DNN engine warns "Targets are not supported by the new graph
+    engine" when these models load (harmless: they run on the default CPU target).
+    Silence only that moment and restore the caller's log level afterwards."""
+    log = getattr(getattr(cv2, "utils", None), "logging", None)
+    if log is None:
+        yield
+        return
+    previous = log.getLogLevel()
+    log.setLogLevel(log.LOG_LEVEL_ERROR)
+    try:
+        yield
+    finally:
+        log.setLogLevel(previous)
+
+
 class YuNetDetector:
     def __init__(
         self, model: str | None = None, score_threshold: float = 0.6, nms_threshold: float = 0.3, min_size: int = 0
     ) -> None:
         path = model or str(weights.fetch("yunet"))
         self.min_size = min_size
-        self.net = cv2.FaceDetectorYN.create(path, "", (320, 320), score_threshold, nms_threshold, 5000)
+        with _quiet_opencv():
+            self.net = cv2.FaceDetectorYN.create(path, "", (320, 320), score_threshold, nms_threshold, 5000)
 
     def detect(self, image: np.ndarray) -> list[Face]:
         h, w = image.shape[:2]
@@ -41,7 +61,9 @@ class SFaceEmbedder:
     threshold = 0.363  # cosine; OpenCV's recommended value for SFace
 
     def __init__(self, model: str | None = None) -> None:
-        self.net = cv2.FaceRecognizerSF.create(model or str(weights.fetch("sface")), "")
+        path = model or str(weights.fetch("sface"))
+        with _quiet_opencv():
+            self.net = cv2.FaceRecognizerSF.create(path, "")
 
     def embed_aligned(self, crops: list[np.ndarray]) -> np.ndarray:
         if not crops:

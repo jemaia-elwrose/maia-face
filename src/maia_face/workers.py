@@ -96,7 +96,9 @@ class AttributesWorker(Worker):
         if not checkpoint:
             raise ValueError("face-attr needs --opt checkpoint=/path/to/mivolo_checkpoint.pth.tar")
         device = select_device(self.options.get("device", "auto"))
-        self.estimator = MiVOLOEstimator(checkpoint, device=device, half=self.options.get("half") == "true")
+        self.estimator = MiVOLOEstimator(
+            checkpoint, device=device, half=self.options.get("half") == "true", source=self.options.get("mivolo_src")
+        )
         log.info("AttributesWorker ready on %s", device)
 
     def predict_batch(self, requests):

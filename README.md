@@ -99,8 +99,17 @@ print(attrs.age, attrs.gender, attrs.gender_conf)
 ```
 
 ```bash
+pip install "maia-face[mivolo] @ git+https://github.com/jemaia-elwrose/maia-face"
+maia-face setup-mivolo                    # fetches MiVOLO's source at a pinned commit
 maia-infer worker face-attr --opt checkpoint=/models/mivolo_checkpoint.pth.tar
 ```
+
+Why `setup-mivolo` instead of `pip install mivolo`: MiVOLO's package can't be built with current
+tooling (its `setup.py` imports `pkg_resources`) and pins ultralytics 8.1.0, which would downgrade
+other workers. Its model code only needs `timm==0.8.13.dev0` (later timm versions changed the
+VOLO internals it builds on), which the `[mivolo]` extra pins. Run it in its own environment or
+the provided image (`docker compose --profile attributes up`). Missing crops are passed as empty
+inputs, as in MiVOLO's own pipeline; face-only checkpoints require a face crop.
 
 With Docker (CPU, default backend):
 
@@ -135,7 +144,7 @@ src/maia_face/
   workers.py     maia-infer workers: face, face-attr
   client.py      FaceClient for pipelines
   weights.py     download-once weights with integrity checks
-  cli.py         maia-face enroll | identify | verify | list | remove
+  cli.py         maia-face enroll | identify | verify | list | remove | setup-mivolo
 examples/        smoke test, video identification
 ```
 
@@ -143,7 +152,7 @@ examples/        smoke test, video identification
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 24 tests, ~2 s; synthetic faces, no weights needed
+pytest -q          # 27 tests, ~3 s; synthetic faces, no weights needed
 ruff check . && ruff format --check .
 ```
 

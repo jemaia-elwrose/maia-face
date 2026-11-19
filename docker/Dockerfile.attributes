@@ -1,0 +1,24 @@
+# Age/gender worker (MiVOLO) on GPU. MiVOLO's model code needs timm 0.8.13.dev0 and its
+# source is fetched at a pinned commit, so this lives in its own image.
+#   docker compose --profile attributes up --build      (checkpoint in ./models)
+FROM python:3.12-slim
+ARG TORCH=2.10.0
+ARG TORCHVISION=0.25.0
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONUNBUFFERED=1 \
+    NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    MAIA_BROKER=tcp://broker:5556 MAIA_MIVOLO_SRC=/opt/MiVOLO
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+RUN pip install "torch==${TORCH}" "torchvision==${TORCHVISION}"
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY src ./src
+# Ultralytics (imported by MiVOLO) pulls desktop OpenCV, which needs GUI libraries: keep headless only.
+RUN printf 'torch==%s\ntorchvision==%s\n' "${TORCH}" "${TORCHVISION}" > /tmp/torch-lock.txt \
+ && pip install --constraint /tmp/torch-lock.txt ".[mivolo]" \
+ && (pip uninstall -y opencv-python opencv-contrib-python || true) \
+ && pip install --force-reinstall --no-deps "opencv-python-headless>=4.8" \
+ && maia-face setup-mivolo --dir /opt/MiVOLO
+RUN python -c "import sys; sys.path.insert(0, '/opt/MiVOLO'); import timm, torch, cv2; \
+from mivolo.model.mi_volo import MiVOLO; from maia_infer.cli import _load_worker; _load_worker('face-attr'); \
+print('ok: torch', torch.__version__, '| timm', timm.__version__, '| opencv', cv2.__version__)"
+CMD ["maia-infer", "worker", "face-attr", "--opt", "checkpoint=/models/mivolo.pth.tar"]

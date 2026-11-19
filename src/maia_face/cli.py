@@ -97,11 +97,19 @@ def main(argv: list[str] | None = None) -> None:
     v.add_argument("--threshold", type=float)
 
     sub.add_parser("list", help="list enrolled identities")
+    sm = sub.add_parser("setup-mivolo", help="fetch MiVOLO's source (pinned commit) for the face-attr worker")
+    sm.add_argument("--dir", help="where to put it (default: $MAIA_MIVOLO_SRC or ~/.cache/maia-face/MiVOLO)")
     r = sub.add_parser("remove", help="delete an identity")
     r.add_argument("name")
 
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
+
+    if args.cmd == "setup-mivolo":
+        from .backends.mivolo import setup_source
+
+        print(f"MiVOLO source ready in {setup_source(args.dir)}")
+        return
 
     if args.cmd in ("list", "remove"):
         with Gallery(args.gallery) as g:

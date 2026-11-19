@@ -138,3 +138,34 @@ def test_cli_enroll_identify_verify_list_remove(fake_backend, tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)[0]["samples"] == 2
     main([*db, "remove", "alice"])
     assert capsys.readouterr().out.strip() == "removed"
+
+
+def test_mivolo_missing_source_has_clear_message(tmp_path):
+    from maia_face.backends.mivolo import MiVOLOEstimator
+
+    with pytest.raises(RuntimeError, match="maia-face setup-mivolo"):
+        MiVOLOEstimator("x.pth", device="cpu", source=str(tmp_path))
+
+
+def test_mivolo_face_only_checkpoint_needs_faces():
+    torch = pytest.importorskip("torch")
+    from types import SimpleNamespace
+
+    from maia_face.backends.mivolo import MiVOLOEstimator
+
+    est = MiVOLOEstimator.__new__(MiVOLOEstimator)
+    meta = SimpleNamespace(min_age=1.0, max_age=95.0, avg_age=42.0, with_persons_model=False)
+    seen = {}
+
+    def inference(x):
+        seen["channels"] = x.shape[1]
+        return torch.zeros(x.shape[0], 3)
+
+    est.model = SimpleNamespace(
+        meta=meta, inference=inference, input_size=8, data_config={"mean": 0, "std": 1}, device="cpu"
+    )
+    est._prepare_images = lambda crops, *a, **k: torch.zeros(len(crops), 3, 8, 8)
+    face = np.zeros((10, 10, 3), np.uint8)
+    assert len(est.estimate([(face, face)])) == 1 and seen["channels"] == 3  # body ignored
+    with pytest.raises(ValueError, match="face-only"):
+        est.estimate([(None, face)])

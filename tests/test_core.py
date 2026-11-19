@@ -141,3 +141,16 @@ def test_crop_clamps_to_image():
     img = np.zeros((100, 100, 3), np.uint8)
     assert crop(img, [-10, -10, 50, 50]).shape == (50, 50, 3)
     assert crop(img, [10, 10, 90, 90], pad=0.5).shape == (100, 100, 3)
+
+
+def test_quiet_opencv_restores_log_level():
+    import cv2
+
+    from maia_face.backends.opencv_zoo import _quiet_opencv
+
+    log = cv2.utils.logging
+    log.setLogLevel(log.LOG_LEVEL_INFO)
+    with _quiet_opencv():
+        assert log.getLogLevel() == log.LOG_LEVEL_ERROR
+    assert log.getLogLevel() == log.LOG_LEVEL_INFO
+    log.setLogLevel(log.LOG_LEVEL_WARNING)

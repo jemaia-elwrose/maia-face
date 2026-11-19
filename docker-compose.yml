@@ -1,6 +1,7 @@
 # docker compose up --build                 # broker + face worker (CPU, OpenCV backend)
 # docker compose up --scale face=3          # more workers
 # docker compose run --rm cli enroll "Alice" /data/alice1.jpg /data/alice2.jpg
+# docker compose --profile attributes up    # + MiVOLO age/gender on GPU (checkpoint in ./models)
 x-face: &face
   build: { context: ., dockerfile: docker/Dockerfile }
   environment:
@@ -26,6 +27,21 @@ services:
     <<: *face
     command: ["maia-infer", "worker", "face", "--max-batch", "8"]
     depends_on: [broker]
+
+  face-attr:
+    build: { context: ., dockerfile: docker/Dockerfile.attributes }
+    profiles: [attributes]
+    command: ["maia-infer", "worker", "face-attr", "--max-batch", "16",
+              "--opt", "checkpoint=/models/${MIVOLO_CHECKPOINT:-mivolo.pth.tar}"]
+    environment:
+      MAIA_BROKER: tcp://broker:5556
+    volumes: ["./models:/models:ro"]
+    depends_on: [broker]
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }]
 
   cli:
     <<: *face

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "maia-face"
-version = "0.1.0"
+version = "0.1.1"
 description = "Face detection, recognition, age/gender and an identity gallery for real-time video analytics, served with maia-infer."
 readme = "README.md"
 license = "MIT"
@@ -20,8 +20,9 @@ dependencies = [
 [project.optional-dependencies]
 # InsightFace pretrained weights: non-commercial research only.
 insightface = ["insightface>=0.7.3,<3", "onnxruntime>=1.17"]  # for NVIDIA: swap in onnxruntime-gpu
-# MiVOLO: code Apache-2.0; check your checkpoint's license (v2 weights are CC BY-NC 4.0).
-mivolo = ["mivolo @ git+https://github.com/WildChlamydia/MiVOLO.git", "torch>=2.2"]
+# MiVOLO model code (fetched by `maia-face setup-mivolo`) needs exactly timm 0.8.13.dev0.
+# Code Apache-2.0; check your checkpoint's license (v2 weights are CC BY-NC 4.0).
+mivolo = ["torch>=2.2", "torchvision", "timm==0.8.13.dev0", "scipy", "ultralytics>=8.1"]
 dev = ["pytest>=8", "ruff==0.17.5"]
 
 [project.scripts]
