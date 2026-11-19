@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+# local data: galleries hold biometric data, never commit them
+/data/
+*.db
+*.db-wal
+*.db-shm
+# weights
+*.onnx
+*.pth
+*.pth.tar
+*.pt

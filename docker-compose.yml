@@ -1,0 +1,37 @@
+# docker compose up --build                 # broker + face worker (CPU, OpenCV backend)
+# docker compose up --scale face=3          # more workers
+# docker compose run --rm cli enroll "Alice" /data/alice1.jpg /data/alice2.jpg
+x-face: &face
+  build: { context: ., dockerfile: docker/Dockerfile }
+  environment:
+    MAIA_BROKER: tcp://broker:5556
+  volumes:
+    - face-weights:/weights          # downloaded once
+    - ./data:/data                   # gallery.db and your images
+  restart: unless-stopped
+
+services:
+  broker:
+    <<: *face
+    command: ["maia-infer", "broker"]
+    ports: ["5555:5555"]
+    volumes: []
+    healthcheck:
+      test: ["CMD", "maia-infer", "ping", "--endpoint", "tcp://localhost:5555"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  face:
+    <<: *face
+    command: ["maia-infer", "worker", "face", "--max-batch", "8"]
+    depends_on: [broker]
+
+  cli:
+    <<: *face
+    profiles: [tools]
+    restart: "no"
+    entrypoint: ["maia-face"]
+
+volumes:
+  face-weights:

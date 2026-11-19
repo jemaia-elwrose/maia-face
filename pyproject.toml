@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "maia-face"
+version = "0.1.0"
+description = "Face detection, recognition, age/gender and an identity gallery for real-time video analytics, served with maia-infer."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Jema" }]
+keywords = ["face-recognition", "face-detection", "computer-vision", "video-analytics", "zeromq"]
+dependencies = [
+    "maia-infer @ git+https://github.com/jemaia-elwrose/maia-infer@v0.3.0",
+    "numpy>=1.24",
+    "opencv-python-headless>=4.8",
+]
+
+[project.optional-dependencies]
+# InsightFace pretrained weights: non-commercial research only.
+insightface = ["insightface>=0.7.3,<3", "onnxruntime>=1.17"]  # for NVIDIA: swap in onnxruntime-gpu
+# MiVOLO: code Apache-2.0; check your checkpoint's license (v2 weights are CC BY-NC 4.0).
+mivolo = ["mivolo @ git+https://github.com/WildChlamydia/MiVOLO.git", "torch>=2.2"]
+dev = ["pytest>=8", "ruff==0.17.5"]
+
+[project.scripts]
+maia-face = "maia_face.cli:main"
+
+[project.entry-points."maia_infer.workers"]
+face = "maia_face.workers:FaceWorker"
+face-attr = "maia_face.workers:AttributesWorker"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maia_face"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B904"]
